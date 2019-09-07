@@ -1,14 +1,14 @@
 
-%define llvm_version 7.0.1
+%define llvm_version 8.0.1
 
 Summary:	LLVM/SPIR-V Bi-Directional Translator
 Name:		SPIRV-LLVM-Translator
-Version:	7.0.1
+Version:	8.0.1
 Release:	1
 License:	University of Illinois/NCSA Open Source License
 Group:		Libraries
-Source0:	https://github.com/KhronosGroup/SPIRV-LLVM-Translator/archive/%{version}-1/%{name}-%{version}-1.tar.gz
-# Source0-md5:	e73c5ebffb4fc5dc606cd217f69ec97c
+Source0:	https://github.com/KhronosGroup/SPIRV-LLVM-Translator/archive/v%{version}-2.tar.gz
+# Source0-md5:	0ab90b03c04512a48e46372c6aa6fa75
 # from Intel opencl-clang
 Patch0:		0001-Update-LowerOpenCL-pass-to-handle-new-blocks-represn.patch
 URL:		https://github.com/KhronosGroup/SPIRV-LLVM-Translator/
@@ -34,7 +34,7 @@ Header files for %{name} library.
 Pliki nagłówkowe biblioteki %{name}.
 
 %prep
-%setup -qn %{name}-%{version}-1
+%setup -qn %{name}-%{version}-2
 
 %build
 
@@ -52,8 +52,8 @@ rm -rf $RPM_BUILD_ROOT
 %{__make} -C build install \
 	DESTDIR=$RPM_BUILD_ROOT
 
-mv $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so.7 $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so.%{version}
-ln -s libLLVMSPIRVLib.so.%{version} $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so.7
+mv $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so.8 $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so.%{version}
+ln -s libLLVMSPIRVLib.so.%{version} $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so.8
 ln -sf libLLVMSPIRVLib.so.%{version} $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so
 
 
@@ -66,8 +66,8 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(644,root,root,755)
 %doc README.md LICENSE.TXT
-%attr(755,root,root) %{_libdir}/libLLVMSPIRVLib.so.7.*.*
-%ghost %attr(755,root,root) %{_libdir}/libLLVMSPIRVLib.so.7
+%attr(755,root,root) %{_libdir}/libLLVMSPIRVLib.so.8.*.*
+%ghost %attr(755,root,root) %{_libdir}/libLLVMSPIRVLib.so.8
 
 %files devel
 %defattr(644,root,root,755)
