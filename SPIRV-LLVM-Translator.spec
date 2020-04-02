@@ -1,16 +1,16 @@
 
-%define llvm_version 9.0.1
+%define llvm_version 10.0.0
 
 Summary:	LLVM/SPIR-V Bi-Directional Translator
 Summary(pl.UTF-8):	Dwustronny translator LLVM/SPIR-V
 Name:		SPIRV-LLVM-Translator
-Version:	9.0.1
+Version:	10.0.0
 Release:	1
 License:	University of Illinois/NCSA Open Source License
 Group:		Libraries
 #Source0Download: https://github.com/KhronosGroup/SPIRV-LLVM-Translator/releases
-Source0:	https://github.com/KhronosGroup/SPIRV-LLVM-Translator/archive/v%{version}-1/%{name}-%{version}-1.tar.gz
-# Source0-md5:	c17e7485ad0c188993945099b0ac7758
+Source0:	https://github.com/KhronosGroup/SPIRV-LLVM-Translator/archive/v%{version}/%{name}-%{version}.tar.gz
+# Source0-md5:	7c595d08c6b09947a2a73243b6fb8cbb
 # from Intel opencl-clang
 Patch0:		0001-Update-LowerOpenCL-pass-to-handle-new-blocks-represn.patch
 URL:		https://github.com/KhronosGroup/SPIRV-LLVM-Translator/
@@ -43,7 +43,7 @@ Header files for LLVMSPIRVLib library.
 Pliki nagłówkowe biblioteki LLVMSPIRVLib.
 
 %prep
-%setup -qn %{name}-%{version}-1
+%setup -qn %{name}-%{version}
 
 %build
 
@@ -59,8 +59,8 @@ rm -rf $RPM_BUILD_ROOT
 %{__make} -C build install \
 	DESTDIR=$RPM_BUILD_ROOT
 
-%{__mv} $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so.9 $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so.%{version}
-ln -s libLLVMSPIRVLib.so.%{version} $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so.9
+%{__mv} $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so.10 $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so.%{version}
+ln -s libLLVMSPIRVLib.so.%{version} $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so.10
 ln -sf libLLVMSPIRVLib.so.%{version} $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so
 
 %clean
@@ -72,8 +72,8 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(644,root,root,755)
 %doc README.md LICENSE.TXT
-%attr(755,root,root) %{_libdir}/libLLVMSPIRVLib.so.9.*.*
-%ghost %attr(755,root,root) %{_libdir}/libLLVMSPIRVLib.so.9
+%attr(755,root,root) %{_libdir}/libLLVMSPIRVLib.so.10.*.*
+%ghost %attr(755,root,root) %{_libdir}/libLLVMSPIRVLib.so.10
 
 %files devel
 %defattr(644,root,root,755)
