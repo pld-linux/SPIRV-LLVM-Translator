@@ -1,16 +1,16 @@
 
-%define llvm_version 10.0.0
+%define llvm_version 11.0.0
 
 Summary:	LLVM/SPIR-V Bi-Directional Translator
 Summary(pl.UTF-8):	Dwustronny translator LLVM/SPIR-V
 Name:		SPIRV-LLVM-Translator
-Version:	10.0.0
+Version:	11.0.0
 Release:	1
 License:	University of Illinois/NCSA Open Source License
 Group:		Libraries
 #Source0Download: https://github.com/KhronosGroup/SPIRV-LLVM-Translator/releases
 Source0:	https://github.com/KhronosGroup/SPIRV-LLVM-Translator/archive/v%{version}/%{name}-%{version}.tar.gz
-# Source0-md5:	7c595d08c6b09947a2a73243b6fb8cbb
+# Source0-md5:	864ece2fb8fa890410708370e4eb3e24
 # from Intel opencl-clang
 Patch0:		0001-Update-LowerOpenCL-pass-to-handle-new-blocks-represn.patch
 URL:		https://github.com/KhronosGroup/SPIRV-LLVM-Translator/
@@ -59,8 +59,8 @@ rm -rf $RPM_BUILD_ROOT
 %{__make} -C build install \
 	DESTDIR=$RPM_BUILD_ROOT
 
-%{__mv} $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so.10 $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so.%{version}
-ln -s libLLVMSPIRVLib.so.%{version} $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so.10
+%{__mv} $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so.11 $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so.%{version}
+ln -s libLLVMSPIRVLib.so.%{version} $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so.11
 ln -sf libLLVMSPIRVLib.so.%{version} $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so
 
 %clean
@@ -72,8 +72,8 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(644,root,root,755)
 %doc README.md LICENSE.TXT
-%attr(755,root,root) %{_libdir}/libLLVMSPIRVLib.so.10.*.*
-%ghost %attr(755,root,root) %{_libdir}/libLLVMSPIRVLib.so.10
+%attr(755,root,root) %{_libdir}/libLLVMSPIRVLib.so.11.*.*
+%ghost %attr(755,root,root) %{_libdir}/libLLVMSPIRVLib.so.11
 
 %files devel
 %defattr(644,root,root,755)
