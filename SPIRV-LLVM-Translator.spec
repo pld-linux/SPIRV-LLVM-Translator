@@ -18,6 +18,7 @@ BuildRequires:	cmake >= 3.3
 BuildRequires:	libstdc++-devel >= 6:4.7
 BuildRequires:	llvm-devel >= %{llvm_version}
 BuildRequires:	pkgconfig
+BuildRequires:	rpmbuild(macros) >= 1.605
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
