@@ -1,16 +1,16 @@
 
-%define llvm_version 12.0.0
+%define llvm_version 13.0.0
 
 Summary:	LLVM/SPIR-V Bi-Directional Translator
 Summary(pl.UTF-8):	Dwustronny translator LLVM/SPIR-V
 Name:		SPIRV-LLVM-Translator
-Version:	12.0.0
+Version:	13.0.0
 Release:	1
 License:	University of Illinois/NCSA Open Source License
 Group:		Libraries
 #Source0Download: https://github.com/KhronosGroup/SPIRV-LLVM-Translator/releases
 Source0:	https://github.com/KhronosGroup/SPIRV-LLVM-Translator/archive/v%{version}/%{name}-%{version}.tar.gz
-# Source0-md5:	d1db52b9dc305eebb9ed11a5324c58a3
+# Source0-md5:	cbb2be6155fda636dd1e4db09dfb1261
 # from Intel opencl-clang
 Patch0:		0001-Update-LowerOpenCL-pass-to-handle-new-blocks-represn.patch
 URL:		https://github.com/KhronosGroup/SPIRV-LLVM-Translator/
@@ -19,6 +19,7 @@ BuildRequires:	libstdc++-devel >= 6:4.7
 BuildRequires:	llvm-devel >= %{llvm_version}
 BuildRequires:	pkgconfig
 BuildRequires:	rpmbuild(macros) >= 1.605
+BuildRequires:	spirv-headers >= 1.5.4-3
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
@@ -50,7 +51,8 @@ Pliki nagłówkowe biblioteki LLVMSPIRVLib.
 
 install -d build
 cd build
-%cmake ..
+%cmake .. \
+	-DLLVM_EXTERNAL_SPIRV_HEADERS_SOURCE_DIR=/usr/include/spirv/unified1
 
 %{__make}
 
@@ -60,8 +62,8 @@ rm -rf $RPM_BUILD_ROOT
 %{__make} -C build install \
 	DESTDIR=$RPM_BUILD_ROOT
 
-%{__mv} $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so.12 $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so.%{version}
-ln -s libLLVMSPIRVLib.so.%{version} $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so.12
+%{__mv} $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so.13 $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so.%{version}
+ln -s libLLVMSPIRVLib.so.%{version} $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so.13
 ln -sf libLLVMSPIRVLib.so.%{version} $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so
 
 %clean
@@ -73,8 +75,8 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(644,root,root,755)
 %doc README.md LICENSE.TXT
-%attr(755,root,root) %{_libdir}/libLLVMSPIRVLib.so.12.*.*
-%ghost %attr(755,root,root) %{_libdir}/libLLVMSPIRVLib.so.12
+%attr(755,root,root) %{_libdir}/libLLVMSPIRVLib.so.13.*.*
+%ghost %attr(755,root,root) %{_libdir}/libLLVMSPIRVLib.so.13
 
 %files devel
 %defattr(644,root,root,755)
