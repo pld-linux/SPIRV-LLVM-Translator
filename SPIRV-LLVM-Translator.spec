@@ -5,21 +5,20 @@ Summary:	LLVM/SPIR-V Bi-Directional Translator
 Summary(pl.UTF-8):	Dwustronny translator LLVM/SPIR-V
 Name:		SPIRV-LLVM-Translator
 Version:	13.0.0
-Release:	1
+Release:	2
 License:	University of Illinois/NCSA Open Source License
 Group:		Libraries
 #Source0Download: https://github.com/KhronosGroup/SPIRV-LLVM-Translator/releases
 Source0:	https://github.com/KhronosGroup/SPIRV-LLVM-Translator/archive/v%{version}/%{name}-%{version}.tar.gz
 # Source0-md5:	cbb2be6155fda636dd1e4db09dfb1261
-# from Intel opencl-clang
-Patch0:		0001-Update-LowerOpenCL-pass-to-handle-new-blocks-represn.patch
+Patch0:		%{name}-OpConstFunctionPointerINTEL.patch
 URL:		https://github.com/KhronosGroup/SPIRV-LLVM-Translator/
 BuildRequires:	cmake >= 3.3
 BuildRequires:	libstdc++-devel >= 6:4.7
 BuildRequires:	llvm-devel >= %{llvm_version}
 BuildRequires:	pkgconfig
 BuildRequires:	rpmbuild(macros) >= 1.605
-BuildRequires:	spirv-headers >= 1.5.4-3
+BuildRequires:	spirv-headers >= 1.5.5
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
@@ -45,10 +44,10 @@ Header files for LLVMSPIRVLib library.
 Pliki nagłówkowe biblioteki LLVMSPIRVLib.
 
 %prep
-%setup -qn %{name}-%{version}
+%setup -q
+%patch0 -p1
 
 %build
-
 install -d build
 cd build
 %cmake .. \
