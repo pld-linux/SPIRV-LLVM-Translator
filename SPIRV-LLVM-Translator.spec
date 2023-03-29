@@ -12,7 +12,7 @@ Group:		Libraries
 Source0:	https://github.com/KhronosGroup/SPIRV-LLVM-Translator/archive/v%{version}/%{name}-%{version}.tar.gz
 # Source0-md5:	19e3ee2fb84754602ec754c594b20a1d
 URL:		https://github.com/KhronosGroup/SPIRV-LLVM-Translator/
-BuildRequires:	cmake >= 3.3
+BuildRequires:	cmake >= 3.13.4
 BuildRequires:	libstdc++-devel >= 6:4.7
 BuildRequires:	llvm-devel >= %{llvm_version}
 BuildRequires:	pkgconfig
