@@ -1,0 +1,477 @@
+From 794e180083c9ba1b61a1a63ba40bb729dbad0c0e Mon Sep 17 00:00:00 2001
+From: Dmitry Sidorov <dmitry.sidorov@intel.com>
+Date: Fri, 31 Mar 2023 13:47:58 +0200
+Subject: [PATCH 1/4] Update spirv-as invocations (#1934)
+
+After SPIRV-Tools commit 2e0f4b52 ("tools: refactorize tools flags
+parsing. (#5111)", 2023-02-27), spirv-as needs to be told explicitly
+when reading from stdin.
+
+Co-authored-by: Sven van Haastregt <sven.vanhaastregt@arm.com>
+---
+ test/GroupAndSubgroupInstructions.spvasm | 2 +-
+ test/spirv-tools-dis.ll                  | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/test/GroupAndSubgroupInstructions.spvasm b/test/GroupAndSubgroupInstructions.spvasm
+index d15484b8..9c50a972 100644
+--- a/test/GroupAndSubgroupInstructions.spvasm
++++ b/test/GroupAndSubgroupInstructions.spvasm
+@@ -31,7 +31,7 @@
+ ; spirv-dis tmp.spv -o llvm-spirv/test/GroupAndSubgroupInstructions.spvasm
+ 
+ ; REQUIRES: spirv-as
+-; RUN: spirv-as < %s --target-env spv1.0 -o %t.spv
++; RUN: spirv-as %s --target-env spv1.0 -o %t.spv
+ ; RUN: spirv-val %t.spv
+ ; RUN: llvm-spirv -r -emit-opaque-pointers %t.spv --spirv-target-env=CL1.2 -o %t.bc
+ ; RUN: llvm-dis %t.bc -o %t.ll
+diff --git a/test/spirv-tools-dis.ll b/test/spirv-tools-dis.ll
+index 21409dc3..791f5010 100644
+--- a/test/spirv-tools-dis.ll
++++ b/test/spirv-tools-dis.ll
+@@ -1,6 +1,6 @@
+ ; RUN: llvm-as %s -o %t.bc
+ ; RUN: llvm-spirv %t.bc --spirv-tools-dis -o - | FileCheck %s
+-; RUN: llvm-spirv %t.bc --spirv-tools-dis -o - | spirv-as
++; RUN: llvm-spirv %t.bc --spirv-tools-dis -o - | spirv-as -
+ 
+ ; Verify that the --spirv-tools-dis options results in SPIRV-Tools compatible assembly.
+ 
+-- 
+2.40.1
+
+From 54318313923c34dee4d9e3aee2d65314148b05eb Mon Sep 17 00:00:00 2001
+From: Dmitry Sidorov <dmitry.sidorov@intel.com>
+Date: Tue, 4 Apr 2023 10:48:10 +0200
+Subject: [PATCH 2/4] Rename ConvertFToTF32INTEL to RoundFToTF32INTEL (#1913)
+ (#1937)
+
+Extension name will be preserved for a while for binary compatibility.
+
+Signed-off-by: Sidorov, Dmitry <dmitry.sidorov@intel.com>
+---
+ include/LLVMSPIRVExtensions.inc               |  3 ++-
+ lib/SPIRV/libSPIRV/SPIRVInstruction.h         | 12 +++++-----
+ lib/SPIRV/libSPIRV/SPIRVNameMapEnum.h         |  4 ++--
+ lib/SPIRV/libSPIRV/SPIRVOpCodeEnumInternal.h  |  2 +-
+ lib/SPIRV/libSPIRV/spirv_internal.hpp         |  8 +++----
+ .../convert_tensor_float32.ll                 | 24 +++++++++----------
+ 6 files changed, 27 insertions(+), 26 deletions(-)
+
+diff --git a/include/LLVMSPIRVExtensions.inc b/include/LLVMSPIRVExtensions.inc
+index 7ff10f52..9de6c142 100644
+--- a/include/LLVMSPIRVExtensions.inc
++++ b/include/LLVMSPIRVExtensions.inc
+@@ -54,6 +54,7 @@ EXT(SPV_INTEL_global_variable_decorations)
+ EXT(SPV_INTEL_complex_float_mul_div)
+ EXT(SPV_INTEL_split_barrier)
+ EXT(SPV_INTEL_masked_gather_scatter)
+-EXT(SPV_INTEL_tensor_float32_conversion)
++EXT(SPV_INTEL_tensor_float32_conversion) // TODO: to remove old extension
++EXT(SPV_INTEL_tensor_float32_rounding)
+ EXT(SPV_EXT_relaxed_printf_string_address_space)
+ EXT(SPV_INTEL_fpga_argument_interfaces)
+diff --git a/lib/SPIRV/libSPIRV/SPIRVInstruction.h b/lib/SPIRV/libSPIRV/SPIRVInstruction.h
+index 0d2fd6be..d322d08d 100644
+--- a/lib/SPIRV/libSPIRV/SPIRVInstruction.h
++++ b/lib/SPIRV/libSPIRV/SPIRVInstruction.h
+@@ -3563,10 +3563,10 @@ _SPIRV_OP(MaskedScatter, false, 5)
+ #undef _SPIRV_OP
+ 
+ template <Op OC>
+-class SPIRVTensorFloat32ConversionINTELInstBase : public SPIRVUnaryInst<OC> {
++class SPIRVTensorFloat32RoundingINTELInstBase : public SPIRVUnaryInst<OC> {
+ protected:
+   SPIRVCapVec getRequiredCapability() const override {
+-    return getVec(internal::CapabilityTensorFloat32ConversionINTEL);
++    return getVec(internal::CapabilityTensorFloat32RoundingINTEL);
+   }
+ 
+   std::optional<ExtensionID> getRequiredExtension() const override {
+@@ -3587,8 +3587,8 @@ protected:
+     // because it may call a method of class Module that may modify LiteralMap
+     // of Module field. That modification is not impacting validate method for
+     // these instructions, so const_cast is safe here.
+-    using SPVTF32ConvTy = SPIRVTensorFloat32ConversionINTELInstBase<OC>;
+-    SPIRVValue *Input = const_cast<SPVTF32ConvTy *>(this)->getOperand(0);
++    using SPVTF32RoundTy = SPIRVTensorFloat32RoundingINTELInstBase<OC>;
++    SPIRVValue *Input = const_cast<SPVTF32RoundTy *>(this)->getOperand(0);
+ 
+     SPIRVType *InCompTy = Input->getType();
+     SPIRVWord InCompCount = 1;
+@@ -3616,8 +3616,8 @@ protected:
+ };
+ 
+ #define _SPIRV_OP(x)                                                           \
+-  typedef SPIRVTensorFloat32ConversionINTELInstBase<internal::Op##x> SPIRV##x;
+-_SPIRV_OP(ConvertFToTF32INTEL)
++  typedef SPIRVTensorFloat32RoundingINTELInstBase<internal::Op##x> SPIRV##x;
++_SPIRV_OP(RoundFToTF32INTEL)
+ #undef _SPIRV_OP
+ } // namespace SPIRV
+ 
+diff --git a/lib/SPIRV/libSPIRV/SPIRVNameMapEnum.h b/lib/SPIRV/libSPIRV/SPIRVNameMapEnum.h
+index 2a34e0b6..c17fd3b6 100644
+--- a/lib/SPIRV/libSPIRV/SPIRVNameMapEnum.h
++++ b/lib/SPIRV/libSPIRV/SPIRVNameMapEnum.h
+@@ -629,8 +629,8 @@ template <> inline void SPIRVMap<Capability, std::string>::init() {
+       "GlobalVariableDecorationsINTEL");
+   add(internal::CapabilityComplexFloatMulDivINTEL, "ComplexFloatMulDivINTEL");
+   add(internal::CapabilityMaskedGatherScatterINTEL, "MaskedGatherScatterINTEL");
+-  add(internal::CapabilityTensorFloat32ConversionINTEL,
+-      "TensorFloat32ConversionINTEL");
++  add(internal::CapabilityTensorFloat32RoundingINTEL,
++      "TensorFloat32RoundingINTEL");
+ }
+ SPIRV_DEF_NAMEMAP(Capability, SPIRVCapabilityNameMap)
+ 
+diff --git a/lib/SPIRV/libSPIRV/SPIRVOpCodeEnumInternal.h b/lib/SPIRV/libSPIRV/SPIRVOpCodeEnumInternal.h
+index 9d8765b5..ea888d8a 100644
+--- a/lib/SPIRV/libSPIRV/SPIRVOpCodeEnumInternal.h
++++ b/lib/SPIRV/libSPIRV/SPIRVOpCodeEnumInternal.h
+@@ -15,4 +15,4 @@ _SPIRV_OP_INTERNAL(ComplexFMulINTEL, internal::ComplexFMulINTEL)
+ _SPIRV_OP_INTERNAL(ComplexFDivINTEL, internal::ComplexFDivINTEL)
+ _SPIRV_OP_INTERNAL(MaskedGatherINTEL, internal::OpMaskedGatherINTEL)
+ _SPIRV_OP_INTERNAL(MaskedScatterINTEL, internal::OpMaskedScatterINTEL)
+-_SPIRV_OP_INTERNAL(ConvertFToTF32INTEL, internal::ConvertFToTF32INTEL)
++_SPIRV_OP_INTERNAL(RoundFToTF32INTEL, internal::RoundFToTF32INTEL)
+diff --git a/lib/SPIRV/libSPIRV/spirv_internal.hpp b/lib/SPIRV/libSPIRV/spirv_internal.hpp
+index c007a422..bb7555de 100644
+--- a/lib/SPIRV/libSPIRV/spirv_internal.hpp
++++ b/lib/SPIRV/libSPIRV/spirv_internal.hpp
+@@ -46,7 +46,7 @@ enum InternalOp {
+   IOpJointMatrixWorkItemLengthINTEL = 6410,
+   IOpComplexFMulINTEL = 6415,
+   IOpComplexFDivINTEL = 6416,
+-  IOpConvertFToTF32INTEL = 6426,
++  IOpRoundFToTF32INTEL = 6426,
+   IOpMaskedGatherINTEL = 6428,
+   IOpMaskedScatterINTEL = 6429,
+   IOpPrev = OpMax - 2,
+@@ -72,7 +72,7 @@ enum InternalCapability {
+   ICapFPArithmeticFenceINTEL = 6144,
+   ICapGlobalVariableDecorationsINTEL = 6146,
+   ICapabilityComplexFloatMulDivINTEL = 6414,
+-  ICapabilityTensorFloat32ConversionINTEL = 6425,
++  ICapabilityTensorFloat32RoundingINTEL = 6425,
+   ICapabilityMaskedGatherScatterINTEL = 6427
+ };
+ 
+@@ -118,8 +118,8 @@ _SPIRV_OP(Capability, MaskedGatherScatterINTEL)
+ _SPIRV_OP(Op, MaskedGatherINTEL)
+ _SPIRV_OP(Op, MaskedScatterINTEL)
+ 
+-_SPIRV_OP(Capability, TensorFloat32ConversionINTEL)
+-_SPIRV_OP(Op, ConvertFToTF32INTEL)
++_SPIRV_OP(Capability, TensorFloat32RoundingINTEL)
++_SPIRV_OP(Op, RoundFToTF32INTEL)
+ #undef _SPIRV_OP
+ 
+ constexpr Op OpForward = static_cast<Op>(IOpForward);
+diff --git a/test/extensions/INTEL/SPV_INTEL_tensor_float32_conversion/convert_tensor_float32.ll b/test/extensions/INTEL/SPV_INTEL_tensor_float32_conversion/convert_tensor_float32.ll
+index 1f027069..140df662 100644
+--- a/test/extensions/INTEL/SPV_INTEL_tensor_float32_conversion/convert_tensor_float32.ll
++++ b/test/extensions/INTEL/SPV_INTEL_tensor_float32_conversion/convert_tensor_float32.ll
+@@ -13,7 +13,7 @@
+ target datalayout = "e-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128-v192:256-v256:256-v512:512-v1024:1024-n8:16:32:64"
+ target triple = "spir64-unknown-unknown"
+ 
+-; CHECK-SPIRV: Capability TensorFloat32ConversionINTEL
++; CHECK-SPIRV: Capability TensorFloat32RoundingINTEL
+ ; CHECK-SPIRV: Extension "SPV_INTEL_tensor_float32_conversion"
+ ; CHECK-SPIRV: TypeFloat [[#FP32Ty:]] 32
+ ; CHECK-SPIRV: TypeVector [[#FP32v8Ty:]] [[#FP32Ty]] 8
+@@ -22,24 +22,24 @@ target triple = "spir64-unknown-unknown"
+ ; CHECK-SPIRV: FunctionParameter [[#FP32Ty]] [[FP32ValId:.*]]
+ ; CHECK-SPIRV: FunctionParameter [[#FP32v8Ty]] [[FP32v8ValId:.*]]
+ 
+-; CHECK-SPIRV: ConvertFToTF32INTEL [[#FP32Ty]] [[#]] [[FP32ValId]]
+-; CHECK-SPIRV: ConvertFToTF32INTEL [[#FP32v8Ty]] [[#]] [[FP32v8ValId]]
+-; CHECK-SPIRV: ConvertFToTF32INTEL [[#FP32Ty]] [[#]] [[#CONST]]
++; CHECK-SPIRV: RoundFToTF32INTEL [[#FP32Ty]] [[#]] [[FP32ValId]]
++; CHECK-SPIRV: RoundFToTF32INTEL [[#FP32v8Ty]] [[#]] [[FP32v8ValId]]
++; CHECK-SPIRV: RoundFToTF32INTEL [[#FP32Ty]] [[#]] [[#CONST]]
+ 
+-; CHECK-LLVM: call spir_func float @_Z27__spirv_ConvertFToTF32INTELf(float
+-; CHECK-LLVM: call spir_func <8 x float> @_Z27__spirv_ConvertFToTF32INTELDv8_f(<8 x float>
+-; CHECK-LLVM: call spir_func float @_Z27__spirv_ConvertFToTF32INTELf(float 1.000000e+00)
++; CHECK-LLVM: call spir_func float @_Z25__spirv_RoundFToTF32INTELf(float
++; CHECK-LLVM: call spir_func <8 x float> @_Z25__spirv_RoundFToTF32INTELDv8_f(<8 x float>
++; CHECK-LLVM: call spir_func float @_Z25__spirv_RoundFToTF32INTELf(float 1.000000e+00)
+ 
+ define spir_func void @_Z2opffv8(float %a, <8 x float> %in) {
+-  %1 = tail call spir_func float @_Z27__spirv_ConvertFToTF32INTELf(float %a)
+-  %2 = tail call spir_func <8 x float> @_Z27__spirv_ConvertFToTF32INTELDv8_f(<8 x float> %in)
+-  %3 = tail call spir_func float @_Z27__spirv_ConvertFToTF32INTELf(float 1.000000e+00)
++  %1 = tail call spir_func float @_Z25__spirv_RoundFToTF32INTELf(float %a)
++  %2 = tail call spir_func <8 x float> @_Z25__spirv_RoundFToTF32INTELDv8_f(<8 x float> %in)
++  %3 = tail call spir_func float @_Z25__spirv_RoundFToTF32INTELf(float 1.000000e+00)
+   ret void
+ }
+ 
+-declare spir_func float @_Z27__spirv_ConvertFToTF32INTELf(float)
++declare spir_func float @_Z25__spirv_RoundFToTF32INTELf(float)
+ 
+-declare spir_func <8 x float> @_Z27__spirv_ConvertFToTF32INTELDv8_f(<8 x float>)
++declare spir_func <8 x float> @_Z25__spirv_RoundFToTF32INTELDv8_f(<8 x float>)
+ 
+ !opencl.spir.version = !{!0}
+ !spirv.Source = !{!1}
+-- 
+2.40.1
+
+From f3b9b604d7eda18d0d1029d94a6eebd33aa3a3fe Mon Sep 17 00:00:00 2001
+From: Dmitry Sidorov <dmitry.sidorov@intel.com>
+Date: Thu, 27 Apr 2023 19:19:00 +0200
+Subject: [PATCH 3/4] Fix standalone builds with LLVM_LINK_LLVM_DYLIB=ON
+ (#1889) (#1981)
+
+Move the LLVM components to LINK_COMPONENTS because the DEPENDS list has the same semantics as add_dependencies(). In this
+case it doesn't include the LLVM components when calling the linker.
+
+It's almost complete revert of #1543
+
+Co-authored-by: Tulio Magno Quites Machado Filho <tuliom@quites.com.br>
+---
+ lib/SPIRV/CMakeLists.txt | 47 ++++++++++++----------------------------
+ 1 file changed, 14 insertions(+), 33 deletions(-)
+
+diff --git a/lib/SPIRV/CMakeLists.txt b/lib/SPIRV/CMakeLists.txt
+index bbef0052..31f13f98 100644
+--- a/lib/SPIRV/CMakeLists.txt
++++ b/lib/SPIRV/CMakeLists.txt
+@@ -38,42 +38,23 @@ set(SRC_LIST
+   libSPIRV/SPIRVType.cpp
+   libSPIRV/SPIRVValue.cpp
+ )
+-if(LLVM_LINK_LLVM_DYLIB)
+-  add_llvm_library(LLVMSPIRVLib STATIC DISABLE_LLVM_LINK_LLVM_DYLIB
+-    ${SRC_LIST}
+-    DEPENDS
+-      intrinsics_gen
+-      LLVMAnalysis
+-      LLVMBitWriter
+-      LLVMCodeGen
+-      LLVMCore
+-      LLVMDemangle
+-      LLVMIRReader
+-      LLVMLinker
+-      LLVMPasses
+-      LLVMSupport
+-      LLVMTargetParser
+-      LLVMTransformUtils
+-  )
+-else()
+-  add_llvm_library(LLVMSPIRVLib
+-    ${SRC_LIST}
+-    LINK_COMPONENTS
+-      Analysis
+-      BitWriter
+-      CodeGen
+-      Core
+-      Demangle
+-      IRReader
+-      Linker
+-      Passes
+-      Support
+-      TargetParser
+-      TransformUtils
++add_llvm_library(LLVMSPIRVLib
++  ${SRC_LIST}
++  LINK_COMPONENTS
++    Analysis
++    BitWriter
++    CodeGen
++    Core
++    Demangle
++    IRReader
++    Linker
++    Passes
++    Support
++    TargetParser
++    TransformUtils
+   DEPENDS
+     intrinsics_gen
+   )
+-endif()
+ 
+ target_include_directories(LLVMSPIRVLib
+   PRIVATE
+-- 
+2.40.1
+
+From 42de1b449486edb0aa2b764e4f4f3771d3f1a4a3 Mon Sep 17 00:00:00 2001
+From: Wenwan Xing <wenwan.xing@intel.com>
+Date: Tue, 9 May 2023 18:25:42 +0800
+Subject: [PATCH 4/4] Fix relationals builtin translation bug
+
+According OpenCL spec, the relationals builtin function shall return a '1' if the specified relation is true for scalar argument types. The functions shall return a '-1' (i.e. all bits set) if the specified relation is true for vector argument types.
+---
+ lib/SPIRV/OCLToSPIRV.cpp               |  13 ++-
+ test/transcoding/relationals_select.ll | 129 +++++++++++++++++++++++++
+ 2 files changed, 137 insertions(+), 5 deletions(-)
+ create mode 100644 test/transcoding/relationals_select.ll
+
+diff --git a/lib/SPIRV/OCLToSPIRV.cpp b/lib/SPIRV/OCLToSPIRV.cpp
+index 1fa88804..19331e19 100644
+--- a/lib/SPIRV/OCLToSPIRV.cpp
++++ b/lib/SPIRV/OCLToSPIRV.cpp
+@@ -1137,11 +1137,14 @@ void OCLToSPIRVBase::visitCallRelational(CallInst *CI,
+   OCLSPIRVBuiltinMap::find(DemangledName.str(), &OC);
+   // i1 or <i1 x N>, depending on whether it returns a vector type.
+   Type *BoolTy = CI->getType()->getWithNewType(Type::getInt1Ty(*Ctx));
+-  mutateCallInst(CI, OC).changeReturnType(BoolTy, [=](IRBuilder<> &Builder,
+-                                                      CallInst *NewCI) {
+-    return Builder.CreateSelect(NewCI, Constant::getAllOnesValue(CI->getType()),
+-                                Constant::getNullValue(CI->getType()));
+-  });
++  mutateCallInst(CI, OC).changeReturnType(
++      BoolTy, [=](IRBuilder<> &Builder, CallInst *NewCI) {
++        Value *TrueOp = CI->getType()->isVectorTy()
++                            ? Constant::getAllOnesValue(CI->getType())
++                            : getInt32(M, 1);
++        return Builder.CreateSelect(NewCI, TrueOp,
++                                    Constant::getNullValue(CI->getType()));
++      });
+ }
+ 
+ void OCLToSPIRVBase::visitCallVecLoadStore(CallInst *CI, StringRef MangledName,
+diff --git a/test/transcoding/relationals_select.ll b/test/transcoding/relationals_select.ll
+new file mode 100644
+index 00000000..349a3356
+--- /dev/null
++++ b/test/transcoding/relationals_select.ll
+@@ -0,0 +1,129 @@
++; RUN: llvm-as %s -o %t.bc
++; RUN: llvm-spirv %t.bc -o %t.spv
++; RUN: llvm-spirv -r -emit-opaque-pointers %t.spv -o %t.rev.bc
++; RUN: llvm-dis < %t.rev.bc | FileCheck %s
++
++; This test checks following relational builtins with scalar type
++
++target datalayout = "e-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128-v192:256-v256:256-v512:512-v1024:1024"
++target triple = "spir64"
++
++; Function Attrs: convergent mustprogress nofree nounwind readnone willreturn
++declare spir_func i32 @_Z8isfinitef(float) local_unnamed_addr #1
++
++; Function Attrs: convergent mustprogress nofree nounwind readnone willreturn
++declare spir_func i32 @_Z5isinff(float) local_unnamed_addr #1
++
++; Function Attrs: convergent mustprogress nofree nounwind readnone willreturn
++declare spir_func i32 @_Z5isnanf(float) local_unnamed_addr #1
++
++; Function Attrs: convergent mustprogress nofree nounwind readnone willreturn
++declare spir_func i32 @_Z8isnormalf(float) local_unnamed_addr #1
++
++; Function Attrs: convergent mustprogress nofree nounwind readnone willreturn
++declare spir_func i32 @_Z7signbitf(float) local_unnamed_addr #1
++
++; Function Attrs: convergent mustprogress nofree nounwind willreturn memory(none)
++declare spir_func <4 x i32> @_Z8isnormalDv4_f(<4 x float> noundef) local_unnamed_addr #1
++
++; Function Attrs: convergent mustprogress nofree nounwind willreturn memory(none)
++declare spir_func <4 x i32> @_Z8isfiniteDv4_f(<4 x float> noundef) local_unnamed_addr #1
++
++; Function Attrs: convergent mustprogress nofree nounwind willreturn memory(none)
++declare spir_func <4 x i32> @_Z5isnanDv4_f(<4 x float> noundef) local_unnamed_addr #1
++
++; Function Attrs: convergent mustprogress nofree nounwind willreturn memory(none)
++declare spir_func <4 x i32> @_Z5isinfDv4_f(<4 x float> noundef) local_unnamed_addr #1
++
++; Function Attrs: convergent mustprogress nofree nounwind willreturn memory(none)
++declare spir_func <4 x i32> @_Z7signbitDv4_f(<4 x float> noundef) local_unnamed_addr #1
++
++; Function Attrs: convergent mustprogress nofree norecurse nounwind willreturn memory(argmem: readwrite)
++define dso_local spir_kernel void @math_kernel_scalar(i32 addrspace(4)* nocapture writeonly %out, float %f) local_unnamed_addr #0 {
++entry:
++; CHECK: [[DATA0:%.*]] = call spir_func i32 @_Z8isfinitef(float [[ARG0:%.*]])
++; CHECK-NEXT: [[DATA1:%.*]] = trunc i32 [[DATA0]] to i1
++; CHECK-NEXT: [[CALL0:%.*]] = select i1 [[DATA1]], i32 1, i32 0
++  %call = tail call spir_func i32 @_Z8isfinitef(float %f) #2
++
++; CHECK: [[DATA2:%.*]] = call spir_func i32 @_Z5isinff(float [[ARG0]])
++; CHECK-NEXT: [[DATA3:%.*]] = trunc i32 [[DATA2]] to i1
++; CHECK-NEXT: [[CALL1:%.*]] = select i1 [[DATA3]], i32 1, i32 0
++  %call1 = tail call spir_func i32 @_Z5isinff(float %f) #2
++  %add = add nsw i32 %call1, %call
++
++; CHECK: [[DATA4:%.*]] = call spir_func i32 @_Z5isnanf(float [[ARG0]])
++; CHECK-NEXT: [[DATA5:%.*]] = trunc i32 [[DATA4]] to i1
++; CHECK-NEXT: [[CALL2:%.*]] = select i1 [[DATA5]], i32 1, i32 0
++  %call2 = tail call spir_func i32 @_Z5isnanf(float %f) #2
++  %add3 = add nsw i32 %add, %call2
++
++; CHECK: [[DATA6:%.*]] = call spir_func i32 @_Z8isnormalf(float [[ARG0]])
++; CHECK-NEXT: [[DATA7:%.*]] = trunc i32 [[DATA6]] to i1
++; CHECK-NEXT: [[CALL3:%.*]] = select i1 [[DATA7]], i32 1, i32 0
++  %call4 = tail call spir_func i32 @_Z8isnormalf(float %f) #2
++  %add5 = add nsw i32 %add3, %call4
++
++; CHECK: [[DATA8:%.*]] = call spir_func i32 @_Z7signbitf(float [[ARG0]])
++; CHECK-NEXT: [[DATA9:%.*]] = trunc i32 [[DATA8]] to i1
++; CHECK-NEXT: [[CALL4:%.*]] = select i1 [[DATA9]], i32 1, i32 0
++  %call6 = tail call spir_func i32 @_Z7signbitf(float %f) #2
++  %add7 = add nsw i32 %add5, %call6
++
++  %arg1 = alloca <4 x float>, align 16
++  %v = load <4 x float>, <4 x float>* %arg1, align 16
++; CHECK: [[DATA10:%.*]] = call spir_func <4 x i32> @_Z8isnormalDv4_f(<4 x float> [[ARG1:%.*]]) #0
++; CHECK-NEXT: [[DATA11:%.*]] = trunc <4 x i32> [[DATA10]] to <4 x i8>
++; CHECK-NEXT: [[DATA12:%.*]] = trunc <4 x i8> [[DATA11]] to <4 x i1>
++; CHECK-NEXT: [[CALL5:%.*]] = select <4 x i1> [[DATA12]], <4 x i32> <i32 -1, i32 -1, i32 -1, i32 -1>, <4 x i32> zeroinitializer
++  %call7 = tail call spir_func <4 x i32> @_Z8isnormalDv4_f(<4 x float> noundef %v) #2
++
++; CHECK: [[DATA13:%.*]] = call spir_func <4 x i32> @_Z8isfiniteDv4_f(<4 x float> [[ARG1]]) #0
++; CHECK-NEXT: [[DATA14:%.*]] = trunc <4 x i32> [[DATA13]] to <4 x i8>
++; CHECK-NEXT: [[DATA15:%.*]] = trunc <4 x i8> [[DATA14]] to <4 x i1>
++; CHECK-NEXT: [[CALL6:%.*]] = select <4 x i1> [[DATA15]], <4 x i32> <i32 -1, i32 -1, i32 -1, i32 -1>, <4 x i32> zeroinitializer
++  %call8 = tail call spir_func <4 x i32> @_Z8isfiniteDv4_f(<4 x float> noundef %v) #2
++
++; CHECK: [[DATA16:%.*]] = call spir_func <4 x i32> @_Z5isnanDv4_f(<4 x float> [[ARG1]]) #0
++; CHECK-NEXT: [[DATA17:%.*]] = trunc <4 x i32> [[DATA16]] to <4 x i8>
++; CHECK-NEXT: [[DATA18:%.*]] = trunc <4 x i8> [[DATA17]] to <4 x i1>
++; CHECK-NEXT: [[CALL7:%.*]] = select <4 x i1> [[DATA18]], <4 x i32> <i32 -1, i32 -1, i32 -1, i32 -1>, <4 x i32> zeroinitializer
++  %call9 = tail call spir_func <4 x i32> @_Z5isnanDv4_f(<4 x float> noundef %v) #2
++
++; CHECK: [[DATA19:%.*]] = call spir_func <4 x i32> @_Z5isinfDv4_f(<4 x float> [[ARG1]]) #0
++; CHECK-NEXT: [[DATA20:%.*]] = trunc <4 x i32> [[DATA19]] to <4 x i8>
++; CHECK-NEXT: [[DATA21:%.*]] = trunc <4 x i8> [[DATA20]] to <4 x i1>
++; CHECK-NEXT: [[CALL8:%.*]] = select <4 x i1> [[DATA21]], <4 x i32> <i32 -1, i32 -1, i32 -1, i32 -1>, <4 x i32> zeroinitializer
++  %call10 = tail call spir_func <4 x i32> @_Z5isinfDv4_f(<4 x float> noundef %v) #2
++
++; CHECK: [[DATA22:%.*]] = call spir_func <4 x i32> @_Z7signbitDv4_f(<4 x float> [[ARG1]]) #0
++; CHECK-NEXT: [[DATA23:%.*]] = trunc <4 x i32> [[DATA22]] to <4 x i8>
++; CHECK-NEXT: [[DATA24:%.*]] = trunc <4 x i8> [[DATA23]] to <4 x i1>
++; CHECK-NEXT: [[CALL9:%.*]] = select <4 x i1> [[DATA24]], <4 x i32> <i32 -1, i32 -1, i32 -1, i32 -1>, <4 x i32> zeroinitializer
++  %call11 = tail call spir_func <4 x i32> @_Z7signbitDv4_f(<4 x float> noundef %v) #2
++  ret void
++}
++
++attributes #0 = { convergent mustprogress nofree norecurse nounwind willreturn memory(argmem: readwrite) "no-trapping-math"="true" "stack-protector-buffer-size"="8" "uniform-work-group-size"="false" }
++attributes #1 = { convergent mustprogress nofree nounwind willreturn memory(none) "no-trapping-math"="true" "stack-protector-buffer-size"="8" }
++attributes #2 = { convergent nounwind willreturn memory(none) }
++
++!llvm.module.flags = !{!0}
++!opencl.ocl.version = !{!1}
++!opencl.spir.version = !{!1}
++!llvm.ident = !{!2}
++
++!0 = !{i32 1, !"wchar_size", i32 4}
++!1 = !{i32 3, i32 0}
++!2 = !{!"clang version 16.0.0"}
++!3 = !{i32 1, i32 1}
++!4 = !{!"none", !"none"}
++!5 = !{!"long*", !"double*"}
++!6 = !{!"", !""}
++!7 = !{!8, !8, i64 0}
++!8 = !{!"double", !9, i64 0}
++!9 = !{!"omnipotent char", !10, i64 0}
++!10 = !{!"Simple C/C++ TBAA"}
++!11 = !{!12, !12, i64 0}
++!12 = !{!"long", !9, i64 0}
++
+-- 
+2.40.1
+
