@@ -17,7 +17,7 @@ BuildRequires:	libstdc++-devel >= 6:4.7
 BuildRequires:	llvm-devel >= %{llvm_version}
 BuildRequires:	pkgconfig
 BuildRequires:	rpmbuild(macros) >= 1.605
-BuildRequires:	spirv-headers >= 1.5.5-6
+BuildRequires:	spirv-headers >= 1.6.1
 BuildRoot:	%{tmpdir}/%{name}-%{version}-root-%(id -u -n)
 
 %description
