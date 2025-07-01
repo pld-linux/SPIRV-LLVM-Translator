@@ -4,13 +4,13 @@
 Summary:	LLVM/SPIR-V Bi-Directional Translator
 Summary(pl.UTF-8):	Dwustronny translator LLVM/SPIR-V
 Name:		SPIRV-LLVM-Translator
-Version:	19.1.8
+Version:	19.1.9
 Release:	1
 License:	University of Illinois/NCSA Open Source License
 Group:		Libraries
 #Source0Download: https://github.com/KhronosGroup/SPIRV-LLVM-Translator/releases
 Source0:	https://github.com/KhronosGroup/SPIRV-LLVM-Translator/archive/v%{version}/%{name}-%{version}.tar.gz
-# Source0-md5:	e3ee2ad788e561c16e2da734f0424ce1
+# Source0-md5:	86cb8005f6aabd9805aedaa816a4695b
 URL:		https://github.com/KhronosGroup/SPIRV-LLVM-Translator/
 BuildRequires:	cmake >= 3.13.4
 BuildRequires:	libstdc++-devel >= 6:4.7
