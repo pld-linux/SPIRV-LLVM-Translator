@@ -1,16 +1,16 @@
 
-%define llvm_version 19.1.0
+%define llvm_version 20.1.0
 
 Summary:	LLVM/SPIR-V Bi-Directional Translator
 Summary(pl.UTF-8):	Dwustronny translator LLVM/SPIR-V
 Name:		SPIRV-LLVM-Translator
-Version:	19.1.9
+Version:	20.1.4
 Release:	1
 License:	University of Illinois/NCSA Open Source License
 Group:		Libraries
 #Source0Download: https://github.com/KhronosGroup/SPIRV-LLVM-Translator/releases
 Source0:	https://github.com/KhronosGroup/SPIRV-LLVM-Translator/archive/v%{version}/%{name}-%{version}.tar.gz
-# Source0-md5:	86cb8005f6aabd9805aedaa816a4695b
+# Source0-md5:	029b1b4504852b9fbd8c4fdc68e7251c
 URL:		https://github.com/KhronosGroup/SPIRV-LLVM-Translator/
 BuildRequires:	cmake >= 3.13.4
 BuildRequires:	libstdc++-devel >= 6:4.7
@@ -59,8 +59,8 @@ rm -rf $RPM_BUILD_ROOT
 %{__make} -C build install \
 	DESTDIR=$RPM_BUILD_ROOT
 
-%{__mv} $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so.19.1 $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so.%{version}
-ln -s libLLVMSPIRVLib.so.%{version} $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so.19.1
+%{__mv} $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so.20.1 $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so.%{version}
+ln -s libLLVMSPIRVLib.so.%{version} $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so.20.1
 ln -sf libLLVMSPIRVLib.so.%{version} $RPM_BUILD_ROOT%{_libdir}/libLLVMSPIRVLib.so
 
 %clean
@@ -73,8 +73,8 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(644,root,root,755)
 %doc README.md LICENSE.TXT
 %attr(755,root,root) %{_bindir}/llvm-spirv
-%attr(755,root,root) %{_libdir}/libLLVMSPIRVLib.so.19.*.*
-%ghost %attr(755,root,root) %{_libdir}/libLLVMSPIRVLib.so.19.1
+%attr(755,root,root) %{_libdir}/libLLVMSPIRVLib.so.20.*.*
+%ghost %attr(755,root,root) %{_libdir}/libLLVMSPIRVLib.so.20.1
 
 %files devel
 %defattr(644,root,root,755)
